@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal Tracker — Recur Club</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #0f0f0f; --ink-2: #1e1e1e; --ink-3: #2c2c2c;
+  --rule: #e2e2e2; --rule-2: #ebebeb;
+  --paper: #f8f7f4; --paper-2: #ffffff;
+  --muted: #8a8a8a; --muted-2: #b0b0b0;
+  --accent: #1a3a5c; --accent-light: #e8eff7;
+  --green: #1a6b3a; --green-light: #e6f4ec;
+  --amber: #7a4e00; --amber-light: #fdf3e3;
+  --red: #8b1a1a; --red-light: #fdf0f0;
+  --blue: #1a3a8b; --blue-light: #eef2fb;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+html { font-size: 14px; }
+body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-weight: 400; line-height: 1.5; min-height: 100vh; }
+
+/* Header */
+header { background: var(--ink); padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.wm { display: flex; align-items: baseline; gap: 10px; }
+.wm-main { font-family: var(--serif); font-size: 17px; font-weight: 500; color: #fff; }
+.wm-sep { width: 1px; height: 14px; background: #444; align-self: center; }
+.wm-sub { font-family: var(--mono); font-size: 11px; color: #666; letter-spacing: 0.5px; text-transform: uppercase; }
+.h-actions { display: flex; gap: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 3px; border: 1px solid transparent; font-family: var(--sans); font-size: 12px; font-weight: 500; cursor: pointer; letter-spacing: 0.2px; transition: all 0.12s; white-space: nowrap; }
+.btn-w { background: #fff; color: var(--ink); border-color: #fff; }
+.btn-w:hover { background: #e8e8e8; }
+.btn-g { background: transparent; color: #888; border-color: #333; }
+.btn-g:hover { color: #fff; border-color: #666; }
+
+/* Metrics */
+.metrics { background: var(--paper-2); border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: repeat(5, 1fr); }
+.metric { padding: 18px 28px; border-right: 1px solid var(--rule); }
+.metric:last-child { border-right: none; }
+.m-lbl { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.m-val { font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.5px; line-height: 1; }
+.m-note { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+/* Toolbar */
+.toolbar { padding: 12px 40px; background: var(--paper-2); border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.tb-grp { display: flex; align-items: center; gap: 2px; }
+.tb-lbl { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px; }
+.fp { padding: 4px 12px; border-radius: 2px; border: 1px solid transparent; font-size: 11px; font-family: var(--sans); font-weight: 500; color: var(--muted); background: transparent; cursor: pointer; transition: all 0.1s; }
+.fp:hover { color: var(--ink); border-color: var(--rule); }
+.fp.active { color: var(--ink); background: var(--paper); border-color: var(--rule); }
+.tb-div { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; }
+
+/* Table */
+.tc { padding: 0 40px 40px; margin-top: 24px; }
+.tw { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead { border-bottom: 2px solid var(--ink); }
+thead th { padding: 11px 16px; text-align: left; font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; background: var(--paper-2); }
+tbody tr { border-bottom: 1px solid var(--rule-2); cursor: pointer; transition: background 0.08s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--paper); }
+tbody td { padding: 13px 16px; vertical-align: middle; }
+
+.cn { font-family: var(--serif); font-size: 14px; font-weight: 500; }
+.ct { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+.cs { font-size: 10px; color: var(--muted-2); margin-top: 3px; font-family: var(--mono); }
+.num { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.nsub { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; }
+.rv { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--green); }
+
+.stg { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 2px; font-size: 11px; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+.sd { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.ss { background: #f0f0f0; color: #666; } .ss .sd { background: #999; }
+.sd2 { background: var(--blue-light); color: var(--blue); } .sd2 .sd { background: var(--blue); }
+.sdoc { background: var(--amber-light); color: var(--amber); } .sdoc .sd { background: var(--amber); }
+.scc { background: #f3f0f9; color: #5a3b8b; } .scc .sd { background: #5a3b8b; }
+.sdis { background: var(--green-light); color: var(--green); } .sdis .sd { background: var(--green); }
+.sdr { background: var(--red-light); color: var(--red); } .sdr .sd { background: var(--red); }
+
+.own { display: inline-block; padding: 3px 8px; border-radius: 2px; font-size: 11px; font-family: var(--mono); font-weight: 500; border: 1px solid; }
+.oc { color: var(--accent); border-color: #b0c4d8; background: var(--accent-light); }
+.ou { color: var(--blue); border-color: #b0c0e8; background: var(--blue-light); }
+.oo { color: var(--amber); border-color: #e8d0a0; background: var(--amber-light); }
+.oco { color: var(--green); border-color: #a0c8b0; background: var(--green-light); }
+.ol { color: #5a1a6b; border-color: #c8a0d8; background: #f5eef9; }
+
+.dc { display: flex; align-items: center; gap: 8px; min-width: 90px; }
+.dt { flex: 1; height: 3px; background: var(--rule); border-radius: 1px; overflow: hidden; }
+.df { height: 100%; border-radius: 1px; }
+.dp { font-size: 11px; font-family: var(--mono); color: var(--muted); min-width: 26px; }
+
+.due { font-family: var(--mono); font-size: 11px; }
+.dov { color: var(--red); font-weight: 500; }
+.dsn { color: var(--amber); }
+.dok { color: var(--muted); }
+
+.rb { display: flex; gap: 4px; opacity: 0; transition: opacity 0.1s; }
+tbody tr:hover .rb { opacity: 1; }
+.ib { width: 26px; height: 26px; border-radius: 2px; border: 1px solid var(--rule); background: var(--paper-2); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.1s; }
+.ib:hover { border-color: var(--ink-3); color: var(--ink); }
+
+.empty { padding: 64px 40px; text-align: center; color: var(--muted); }
+.eh { font-family: var(--serif); font-size: 18px; color: var(--ink); margin-bottom: 8px; }
+.es { font-size: 13px; font-family: var(--mono); }
+
+/* Overlay / Modal */
+.overlay { position: fixed; inset: 0; background: rgba(15,15,15,0.55); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 4px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 24px 64px rgba(0,0,0,0.18); }
+.overlay.open .modal { transform: translateY(0); }
+.mh { padding: 22px 28px 18px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
+.mt { font-family: var(--serif); font-size: 18px; font-weight: 500; }
+.xb { width: 30px; height: 30px; border-radius: 2px; border: 1px solid var(--rule); background: transparent; color: var(--muted); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.1s; }
+.xb:hover { background: var(--paper); color: var(--ink); }
+.mb { padding: 24px 28px; }
+.sh { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--rule-2); }
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.ff { grid-column: 1/-1; }
+.fld { display: flex; flex-direction: column; gap: 5px; }
+.fl { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.fi, .fs, .fta { background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 8px 12px; color: var(--ink); font-family: var(--sans); font-size: 13px; outline: none; transition: border-color 0.1s; width: 100%; }
+.fi:focus, .fs:focus, .fta:focus { border-color: var(--ink-3); background: var(--paper-2); }
+.fta { resize: vertical; min-height: 70px; }
+.fs option { background: var(--paper-2); }
+
+/* Checklist */
+.cl { display: flex; flex-direction: column; gap: 1px; margin-bottom: 20px; }
+.cr { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--paper); border: 1px solid var(--rule-2); cursor: pointer; transition: background 0.08s; user-select: none; }
+.cr:hover { background: var(--paper-2); }
+.cr.chk { background: var(--green-light); border-color: #b8dcc8; }
+.cb { width: 15px; height: 15px; border: 1.5px solid var(--rule); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; transition: all 0.1s; background: var(--paper-2); }
+.cr.chk .cb { background: var(--green); border-color: var(--green); color: #fff; }
+.clbl { font-size: 13px; color: var(--ink); flex: 1; }
+.cr.chk .clbl { color: var(--muted); text-decoration: line-through; }
+.ctag { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 2px; border: 1px solid; }
+
+.mf { padding: 16px 28px 22px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--rule-2); }
+.bmp { background: var(--ink); color: #fff; border-color: var(--ink); padding: 8px 20px; font-size: 13px; }
+.bmp:hover { background: var(--ink-2); }
+.bmg { background: transparent; color: var(--muted); border: 1px solid var(--rule); padding: 8px 16px; font-size: 13px; }
+.bmg:hover { color: var(--ink); border-color: var(--ink-3); }
+
+/* Detail panel */
+.detail { position: fixed; right: 0; top: 56px; bottom: 0; width: 420px; background: var(--paper-2); border-left: 1px solid var(--rule); z-index: 150; transform: translateX(100%); transition: transform 0.22s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; box-shadow: -8px 0 32px rgba(0,0,0,0.06); }
+.detail.open { transform: translateX(0); }
+.dh { padding: 22px 24px 16px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: var(--paper-2); display: flex; justify-content: space-between; align-items: flex-start; }
+.dco { font-family: var(--serif); font-size: 20px; font-weight: 500; }
+.dbdg { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.dbdy { padding: 20px 24px; display: flex; flex-direction: column; gap: 22px; }
+.dst { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--rule-2); }
+.kvg { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kv { display: flex; flex-direction: column; gap: 3px; }
+.kk { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.kv2 { font-size: 14px; font-weight: 500; }
+.spcc { background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 12px 14px; }
+.spn { font-size: 13px; font-weight: 500; }
+.spnum { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 3px; }
+.ac { background: var(--accent-light); border: 1px solid #b8cede; border-radius: 3px; padding: 14px; }
+.at { font-size: 13px; line-height: 1.5; color: var(--ink); }
+.ad { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-top: 5px; }
+.stps { display: flex; flex-direction: column; gap: 6px; }
+.stp { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: var(--paper); border: 1px solid var(--rule-2); border-radius: 3px; }
+.sdot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.stxt { font-size: 12px; color: var(--ink); flex: 1; line-height: 1.5; }
+.sbdg { font-family: var(--mono); font-size: 10px; padding: 2px 6px; border-radius: 2px; border: 1px solid; white-space: nowrap; }
+.dcl { display: flex; flex-direction: column; gap: 1px; }
+.dcr { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--paper); font-size: 12px; cursor: pointer; transition: background 0.08s; border-radius: 2px; }
+.dcr:hover { background: var(--rule-2); }
+.dcb { width: 14px; height: 14px; border: 1.5px solid var(--rule); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 8px; flex-shrink: 0; background: var(--paper-2); }
+.dcr.done .dcb { background: var(--green); border-color: var(--green); color: #fff; }
+.dcr.done .dlbl { color: var(--muted); text-decoration: line-through; }
+.dlbl { flex: 1; font-family: var(--mono); font-size: 11px; }
+.nb { background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 12px 14px; font-size: 13px; line-height: 1.6; color: var(--muted); font-style: italic; }
+.dacts { display: flex; gap: 8px; }
+.deb { flex: 1; background: var(--ink); color: #fff; border: none; border-radius: 2px; padding: 9px; font-family: var(--sans); font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.1s; }
+.deb:hover { background: var(--ink-2); }
+.ddb { width: 36px; background: transparent; color: var(--muted); border: 1px solid var(--rule); border-radius: 2px; cursor: pointer; font-size: 14px; transition: all 0.1s; }
+.ddb:hover { color: var(--red); border-color: var(--red); background: var(--red-light); }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; right: 40px; background: var(--ink); color: #fff; border-radius: 3px; padding: 10px 18px; font-size: 12px; font-family: var(--mono); z-index: 400; transform: translateY(16px); opacity: 0; transition: all 0.2s; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wm">
+    <span class="wm-main">Recur Club</span>
+    <div class="wm-sep"></div>
+    <span class="wm-sub">Deal Tracker</span>
+  </div>
+  <div class="h-actions">
+    <button class="btn btn-g" onclick="exportCSV()">Export CSV</button>
+    <button class="btn btn-w" onclick="openAdd()">+ New Deal</button>
+  </div>
+</header>
+
+<div class="metrics" id="metricsBar"></div>
+
+<div class="toolbar">
+  <div class="tb-grp">
+    <span class="tb-lbl">Stage</span>
+    <button class="fp active" onclick="setStage('all',this)">All</button>
+    <button class="fp" onclick="setStage('Sourcing',this)">Sourcing</button>
+    <button class="fp" onclick="setStage('Diligence',this)">Diligence</button>
+    <button class="fp" onclick="setStage('Docs',this)">Docs</button>
+    <button class="fp" onclick="setStage('Credit Committee',this)">CC</button>
+    <button class="fp" onclick="setStage('Disbursed',this)">Disbursed</button>
+    <button class="fp" onclick="setStage('Dropped',this)">Dropped</button>
+  </div>
+  <div class="tb-div"></div>
+  <div class="tb-grp">
+    <span class="tb-lbl">Owner</span>
+    <button class="fp active" onclick="setOwner('all',this)">All</button>
+    <button class="fp" onclick="setOwner('CapC',this)">Me</button>
+    <button class="fp" onclick="setOwner('Underwriter',this)">UW</button>
+    <button class="fp" onclick="setOwner('Operations',this)">Ops</button>
+    <button class="fp" onclick="setOwner('Company',this)">Company</button>
+    <button class="fp" onclick="setOwner('Lender',this)">Lender</button>
+  </div>
+  <div class="tb-div"></div>
+  <div class="tb-grp month-grp">
+    <span class="tb-lbl">Month</span>
+    <div id="monthGrp" style="display:flex;gap:2px"></div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tw">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Size</th>
+          <th>Net Rev.</th>
+          <th>Stage</th>
+          <th>Pending On</th>
+          <th>Data</th>
+          <th>Next Step</th>
+          <th>Due</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div id="emptyEl" class="empty" style="display:none">
+      <div class="eh">No deals found</div>
+      <div class="es">Adjust filters or add a new deal</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+<div class="modal">
+  <div class="mh">
+    <div class="mt" id="modalTitle">New Deal</div>
+    <button class="xb" onclick="closeModal()">×</button>
+  </div>
+  <div class="mb">
+    <div class="sh">Deal Information</div>
+    <div class="fg">
+      <div class="fld"><label class="fl">Company Name *</label><input class="fi" id="f_co" placeholder="e.g. Healthkart" /></div>
+      <div class="fld"><label class="fl">Industry / Type</label><input class="fi" id="f_type" placeholder="e.g. D2C, SaaS" /></div>
+      <div class="fld"><label class="fl">Deal Size (₹ Cr) *</label><input class="fi" id="f_size" type="number" placeholder="e.g. 10" /></div>
+      <div class="fld"><label class="fl">Revenue % *</label><input class="fi" id="f_rpct" type="number" step="0.1" placeholder="e.g. 2.5" /></div>
+      <div class="fld"><label class="fl">Stage *</label>
+        <select class="fs" id="f_stage">
+          <option>Sourcing</option><option>Diligence</option><option>Docs</option>
+          <option>Credit Committee</option><option>Disbursed</option><option>Dropped</option>
+        </select>
+      </div>
+      <div class="fld"><label class="fl">Pending On *</label>
+        <select class="fs" id="f_owner">
+          <option value="CapC">Me (CapC)</option><option value="Underwriter">Underwriter</option>
+          <option value="Operations">Operations</option><option value="Company">Company</option><option value="Lender">Lender</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sh">Company SPOC</div>
+    <div class="fg" style="margin-bottom:20px">
+      <div class="fld"><label class="fl">SPOC Name</label><input class="fi" id="f_spoc_name" placeholder="e.g. Rahul Sharma" /></div>
+      <div class="fld"><label class="fl">SPOC Number</label><input class="fi" id="f_spoc_num" placeholder="e.g. +91 98765 43210" /></div>
+    </div>
+
+    <div class="sh">Pending Steps</div>
+    <div class="fg" style="margin-bottom:20px">
+      <div class="fld ff"><label class="fl">Next Step — on Me (CapC)</label><input class="fi" id="f_step_me" placeholder="e.g. Send term sheet draft by EOD" /></div>
+      <div class="fld ff"><label class="fl">Next Step — on Company / Client</label><input class="fi" id="f_step_co" placeholder="e.g. Share bank statements for last 3 months" /></div>
+      <div class="fld"><label class="fl">Due Date</label><input class="fi" id="f_due" type="date" /></div>
+      <div class="fld"><label class="fl">Notes</label><input class="fi" id="f_notes" placeholder="Any context..." /></div>
+    </div>
+
+    <div class="sh">Data Received — check what's in</div>
+    <div class="cl" id="chklist"></div>
+  </div>
+  <div class="mf">
+    <button class="btn bmg" onclick="closeModal()">Cancel</button>
+    <button class="btn bmp" onclick="saveDeal()">Save Deal</button>
+  </div>
+</div>
+</div>
+
+<!-- Detail panel -->
+<div class="detail" id="detailPanel">
+  <div class="dh">
+    <div>
+      <div class="dco" id="dp_co">—</div>
+      <div class="dbdg" id="dp_badges"></div>
+    </div>
+    <button class="xb" onclick="closeDetail()">×</button>
+  </div>
+  <div class="dbdy" id="dp_body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='recur_v3';
+const DOCS=[
+  {id:'audited',  label:'Audited Financials',         owner:'Company'},
+  {id:'prov',     label:'Provisional Financials',     owner:'Company'},
+  {id:'bank',     label:'Bank Statements (12M)',       owner:'Company'},
+  {id:'gst',      label:'GST Returns',                owner:'Company'},
+  {id:'cash',     label:'Cash Position (as on date)', owner:'Company'},
+  {id:'debt',     label:'Debt Position (as on date)', owner:'Company'},
+];
+const SC={Sourcing:'ss',Diligence:'sd2',Docs:'sdoc','Credit Committee':'scc',Disbursed:'sdis',Dropped:'sdr'};
+const OC={CapC:'oc',Underwriter:'ou',Operations:'oo',Company:'oco',Lender:'ol'};
+const OCOL={CapC:'#1a3a5c',Underwriter:'#1a3a8b',Operations:'#7a4e00',Company:'#1a6b3a',Lender:'#5a1a6b'};
+
+let deals=[],editId=null,sF='all',oF='all',mF='all';
+
+function load(){try{deals=JSON.parse(localStorage.getItem(KEY))||sample();}catch{deals=sample();}}
+function save(){localStorage.setItem(KEY,JSON.stringify(deals));}
+
+function sample(){return[
+  {id:1,co:'Healthkart',type:'D2C Health',size:10,rpct:2.5,stage:'Diligence',owner:'Underwriter',
+   spoc_name:'Rahul Mehta',spoc_num:'+91 98102 34567',
+   step_me:'Follow up with UW on credit memo status',step_co:'Send updated debt schedule',
+   due:'2026-03-28',notes:'Repeat borrower. UW has all docs, awaiting credit memo.',
+   docs:{audited:true,prov:true,bank:true,gst:true,cash:false,debt:false}},
+  {id:2,co:'Shiprocket',type:'Logistics SaaS',size:25,rpct:1.8,stage:'Credit Committee',owner:'CapC',
+   spoc_name:'Priya Singh',spoc_num:'+91 99887 65432',
+   step_me:'Prepare CC deck and circulate by Thursday',step_co:'Confirm collateral structure',
+   due:'2026-03-27',notes:'CC scheduled Thursday. Strong financials.',
+   docs:{audited:true,prov:true,bank:true,gst:true,cash:true,debt:true}},
+  {id:3,co:'Atomberg',type:'Consumer Electronics',size:8,rpct:3.0,stage:'Docs',owner:'Company',
+   spoc_name:'Ankit Gupta',spoc_num:'+91 90000 12345',
+   step_me:'',step_co:'Execute and return signed loan agreement',
+   due:'2026-03-30',notes:'All diligence complete. Pending execution of loan agreement.',
+   docs:{audited:true,prov:true,bank:true,gst:true,cash:true,debt:true}},
+  {id:4,co:'Curefoods',type:'Cloud Kitchen',size:15,rpct:2.0,stage:'Disbursed',owner:'Operations',
+   spoc_name:'Vikram Nair',spoc_num:'+91 98765 11111',
+   step_me:'',step_co:'',
+   due:'2026-03-26',notes:'Disbursed. Ops to confirm NACH registration.',
+   docs:{audited:true,prov:true,bank:true,gst:true,cash:true,debt:true}},
+  {id:5,co:'Lenskart',type:'Eyewear Retail',size:50,rpct:1.5,stage:'Sourcing',owner:'CapC',
+   spoc_name:'',spoc_num:'',
+   step_me:'Schedule intro call — pitch RBF product',step_co:'',
+   due:'2026-04-02',notes:'Warm intro via founder WhatsApp group.',
+   docs:{audited:false,prov:false,bank:false,gst:false,cash:false,debt:false}},
+];}
+
+function setStage(v,el){
+  sF=v;
+  document.querySelectorAll('.tb-grp:first-child .fp').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');render();
+}
+function setOwner(v,el){
+  oF=v;
+  document.querySelectorAll('.tb-grp:last-child .fp').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');render();
+}
+
+function setMonth(v,el){
+  mF=v;
+  document.querySelectorAll('.tb-grp.month-grp .fp').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');render();
+}
+function getMonths(){
+  const months=[...new Set(deals.filter(d=>d.due).map(d=>new Date(d.due).toLocaleString('default',{month:'short',year:'numeric'})))];
+  months.sort((a,b)=>new Date(a)-new Date(b));
+  return months;
+}
+function buildMonthFilter(){
+  const months=getMonths();
+  const grp=document.getElementById('monthGrp');
+  grp.innerHTML='<button class="fp active" onclick="setMonth(\'all\',this)">All</button>'+
+    months.map(m=>`<button class="fp" onclick="setMonth('${m}',this)">${m}</button>`).join('');
+}
+function fil(){return deals.filter(d=>{const dm=d.due?new Date(d.due).toLocaleString('default',{month:'short',year:'numeric'}):null;return(sF==='all'||d.stage===sF)&&(oF==='all'||d.owner===oF)&&(mF==='all'||dm===mF);});}
+
+function renderMetrics(){
+  const a=deals.filter(d=>d.stage!=='Dropped');
+  const sz=a.reduce((s,d)=>s+(d.size||0),0);
+  const rv=a.reduce((s,d)=>s+(d.size||0)*(d.rpct||0)/100,0)*100;
+  const disbDeals=deals.filter(d=>d.stage==='Disbursed');
+  const dis=disbDeals.length;
+  const rvDis=disbDeals.reduce((s,d)=>s+(d.size||0)*(d.rpct||0)/100,0)*100;
+  const myq=deals.filter(d=>d.owner==='CapC'&&d.stage!=='Dropped'&&d.stage!=='Disbursed').length;
+  const ov=deals.filter(d=>d.due&&new Date(d.due)<new Date()&&d.stage!=='Disbursed'&&d.stage!=='Dropped').length;
+  document.getElementById('metricsBar').innerHTML=`
+    <div class="metric"><div class="m-lbl">Active Deals</div><div class="m-val">${a.length}</div><div class="m-note">${deals.length} total</div></div>
+    <div class="metric"><div class="m-lbl">Pipeline</div><div class="m-val">₹${sz}Cr</div><div class="m-note">weighted potential</div></div>
+    <div class="metric"><div class="m-lbl">My Revenue</div><div style="display:flex;align-items:flex-start;gap:20px;margin-top:2px"><div><div class="m-val" style="color:var(--green)">${rv.toFixed(1)}L</div><div class="m-note">if all close</div></div><div style="width:1px;height:36px;background:var(--rule);flex-shrink:0"></div><div><div class="m-val" style="color:var(--ink-3);font-size:18px">${rvDis.toFixed(1)}L</div><div class="m-note">earned</div></div></div></div>
+    <div class="metric"><div class="m-lbl">Disbursed</div><div class="m-val">${dis}</div><div class="m-note">deals closed</div></div>
+    <div class="metric"><div class="m-lbl">On My Plate</div><div class="m-val" style="color:${ov>0?'var(--red)':'var(--ink)'}">${myq}</div><div class="m-note">${ov>0?ov+' overdue':'all on track'}</div></div>
+  `;
+}
+
+function render(){
+  buildMonthFilter();
+  const rows=fil();
+  const tbody=document.getElementById('tbody');
+  const empty=document.getElementById('emptyEl');
+  if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=rows.map(d=>{
+    const rv=(((d.size||0)*(d.rpct||0)/100)*100).toFixed(1);
+    const done=Object.values(d.docs||{}).filter(Boolean).length;
+    const pct=Math.round(done/DOCS.length*100);
+    const bc=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--accent)';
+    const due=d.due?new Date(d.due):null;
+    const diff=due?Math.ceil((due-new Date())/86400000):null;
+    const dc=diff===null?'':diff<0?'dov':diff<=2?'dsn':'dok';
+    const dt=diff===null?'—':diff<0?`${Math.abs(diff)}d overdue`:diff===0?'Today':diff===1?'Tomorrow':d.due;
+    const ns=d.owner==='CapC'?d.step_me:d.step_co;
+    return `<tr onclick="openDetail(${d.id})">
+      <td><div class="cn">${d.co}</div><div class="ct">${d.type||'—'}</div>${d.spoc_name?`<div class="cs">${d.spoc_name}</div>`:''}</td>
+      <td><div class="num">₹${d.size}Cr</div></td>
+      <td><div class="rv">₹${rv}L</div><div class="nsub">${d.rpct}%</div></td>
+      <td><span class="stg ${SC[d.stage]||''}"><span class="sd"></span>${d.stage}</span></td>
+      <td><span class="own ${OC[d.owner]||''}">${d.owner}</span></td>
+      <td><div class="dc"><div class="dt"><div class="df" style="width:${pct}%;background:${bc}"></div></div><span class="dp">${pct}%</span></div></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)">${ns||'—'}</td>
+      <td><span class="due ${dc}">${dt}</span></td>
+      <td onclick="event.stopPropagation()"><div class="rb"><button class="ib" onclick="openEdit(${d.id})">✎</button><button class="ib" onclick="del(${d.id})">✕</button></div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openDetail(id){
+  const d=deals.find(x=>x.id===id);if(!d)return;
+  const rv=(((d.size||0)*(d.rpct||0)/100)*100).toFixed(1);
+  document.getElementById('dp_co').textContent=d.co;
+  document.getElementById('dp_badges').innerHTML=`
+    <span class="stg ${SC[d.stage]||''}"><span class="sd"></span>${d.stage}</span>
+    <span class="own ${OC[d.owner]||''}">${d.owner}</span>`;
+  const done=Object.values(d.docs||{}).filter(Boolean).length;
+  const pct=Math.round(done/DOCS.length*100);
+  document.getElementById('dp_body').innerHTML=`
+    <div>
+      <div class="dst">Deal Info</div>
+      <div class="kvg">
+        <div class="kv"><div class="kk">Industry</div><div class="kv2">${d.type||'—'}</div></div>
+        <div class="kv"><div class="kk">Deal Size</div><div class="kv2">₹${d.size}Cr</div></div>
+        <div class="kv"><div class="kk">Revenue %</div><div class="kv2">${d.rpct}%</div></div>
+        <div class="kv"><div class="kk">Net Revenue</div><div class="kv2" style="color:var(--green)">₹${rv}L</div></div>
+      </div>
+    </div>
+    ${(d.spoc_name||d.spoc_num)?`<div>
+      <div class="dst">Company SPOC</div>
+      <div class="spcc"><div class="spn">${d.spoc_name||'—'}</div><div class="spnum">${d.spoc_num||'—'}</div></div>
+    </div>`:''}
+    ${(d.step_me||d.step_co)?`<div>
+      <div class="dst">Pending Steps</div>
+      <div class="stps">
+        ${d.step_me?`<div class="stp"><div class="sdot" style="background:${OCOL['CapC']}"></div><div class="stxt">${d.step_me}</div><span class="sbdg oc">Me</span></div>`:''}
+        ${d.step_co?`<div class="stp"><div class="sdot" style="background:${OCOL['Company']}"></div><div class="stxt">${d.step_co}</div><span class="sbdg oco">Company</span></div>`:''}
+        ${d.due?`<div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px">Due: ${d.due}</div>`:''}
+      </div>
+    </div>`:''}
+    <div>
+      <div class="dst">Data Checklist — ${done}/${DOCS.length} (${pct}%)</div>
+      <div class="dcl">
+        ${DOCS.map(doc=>{const ok=d.docs&&d.docs[doc.id];return`<div class="dcr ${ok?'done':''}" onclick="tDoc(${d.id},'${doc.id}')"><div class="dcb">${ok?'✓':''}</div><span class="dlbl">${doc.label}</span><span class="sbdg oco" style="font-size:10px;padding:1px 5px">${doc.owner}</span></div>`;}).join('')}
+      </div>
+    </div>
+    ${d.notes?`<div><div class="dst">Notes</div><div class="nb">${d.notes}</div></div>`:''}
+    <div class="dacts">
+      <button class="deb" onclick="openEdit(${d.id})">Edit Deal</button>
+      <button class="ddb" onclick="del(${d.id})">✕</button>
+    </div>`;
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function tDoc(id,key){
+  const d=deals.find(x=>x.id===id);if(!d)return;
+  if(!d.docs)d.docs={};
+  d.docs[key]=!d.docs[key];
+  save();renderMetrics();render();openDetail(id);
+}
+
+function closeDetail(){document.getElementById('detailPanel').classList.remove('open');}
+
+function buildCL(map){
+  document.getElementById('chklist').innerHTML=DOCS.map(doc=>{
+    const ok=map&&map[doc.id];
+    return`<div class="cr ${ok?'chk':''}" onclick="tCheck(this)"><div class="cb">${ok?'✓':''}</div><span class="clbl">${doc.label}</span><span class="ctag oco">${doc.owner}</span></div>`;
+  }).join('');
+}
+
+function tCheck(el){el.classList.toggle('chk');el.querySelector('.cb').textContent=el.classList.contains('chk')?'✓':'';}
+
+function getCL(){
+  const r={};
+  document.querySelectorAll('#chklist .cr').forEach((el,i)=>{r[DOCS[i].id]=el.classList.contains('chk');});
+  return r;
+}
+
+function openAdd(){
+  editId=null;
+  document.getElementById('modalTitle').textContent='New Deal';
+  ['f_co','f_type','f_size','f_rpct','f_spoc_name','f_spoc_num','f_step_me','f_step_co','f_due','f_notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f_stage').value='Sourcing';
+  document.getElementById('f_owner').value='CapC';
+  buildCL({});
+  document.getElementById('overlay').classList.add('open');
+}
+
+function openEdit(id){
+  const d=deals.find(x=>x.id===id);if(!d)return;
+  editId=id;
+  document.getElementById('modalTitle').textContent=`Edit — ${d.co}`;
+  document.getElementById('f_co').value=d.co||'';
+  document.getElementById('f_type').value=d.type||'';
+  document.getElementById('f_size').value=d.size||'';
+  document.getElementById('f_rpct').value=d.rpct||'';
+  document.getElementById('f_stage').value=d.stage||'Sourcing';
+  document.getElementById('f_owner').value=d.owner||'CapC';
+  document.getElementById('f_spoc_name').value=d.spoc_name||'';
+  document.getElementById('f_spoc_num').value=d.spoc_num||'';
+  document.getElementById('f_step_me').value=d.step_me||'';
+  document.getElementById('f_step_co').value=d.step_co||'';
+  document.getElementById('f_due').value=d.due||'';
+  document.getElementById('f_notes').value=d.notes||'';
+  buildCL(d.docs||{});
+  document.getElementById('overlay').classList.add('open');
+  closeDetail();
+}
+
+function closeModal(){document.getElementById('overlay').classList.remove('open');editId=null;}
+function bgClose(e){if(e.target===document.getElementById('overlay'))closeModal();}
+
+function saveDeal(){
+  const co=document.getElementById('f_co').value.trim();
+  const size=parseFloat(document.getElementById('f_size').value);
+  const rpct=parseFloat(document.getElementById('f_rpct').value);
+  if(!co){toast('Company name required');return;}
+  if(isNaN(size)){toast('Deal size required');return;}
+  if(isNaN(rpct)){toast('Revenue % required');return;}
+  const data={co,type:document.getElementById('f_type').value.trim(),size,rpct,
+    stage:document.getElementById('f_stage').value,owner:document.getElementById('f_owner').value,
+    spoc_name:document.getElementById('f_spoc_name').value.trim(),
+    spoc_num:document.getElementById('f_spoc_num').value.trim(),
+    step_me:document.getElementById('f_step_me').value.trim(),
+    step_co:document.getElementById('f_step_co').value.trim(),
+    due:document.getElementById('f_due').value,
+    notes:document.getElementById('f_notes').value.trim(),
+    docs:getCL()};
+  if(editId){const i=deals.findIndex(d=>d.id===editId);deals[i]={...deals[i],...data};toast('Deal updated');}
+  else{data.id=Date.now();deals.push(data);toast('Deal added');}
+  save();closeModal();renderMetrics();render();
+}
+
+function del(id){
+  const d=deals.find(x=>x.id===id);if(!d)return;
+  if(!confirm(`Delete "${d.co}"?`))return;
+  deals=deals.filter(x=>x.id!==id);
+  save();renderMetrics();render();closeDetail();toast('Deleted');
+}
+
+function exportCSV(){
+  const h=['Company','Type','Size (Cr)','Rev %','Net Rev (L)','Stage','Owner','SPOC','SPOC #','Step (Me)','Step (Company)','Due','Data %','Notes'];
+  const rows=deals.map(d=>{
+    const rv=(((d.size||0)*(d.rpct||0)/100)*100).toFixed(1);
+    const pct=Math.round(Object.values(d.docs||{}).filter(Boolean).length/DOCS.length*100);
+    return[d.co,d.type,d.size,d.rpct,rv,d.stage,d.owner,d.spoc_name,d.spoc_num,d.step_me,d.step_co,d.due,pct+'%',d.notes].map(v=>`"${v||''}"`).join(',');
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(','),...rows].join('\n'));
+  a.download=`deals-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();toast('CSV exported');
+}
+
+let tt;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2200);}
+
+load();renderMetrics();render();
+</script>
+</body>
+</html>
