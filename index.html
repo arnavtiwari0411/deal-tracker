@@ -104,6 +104,8 @@ tbody tr:hover .rb { opacity: 1; }
 .ib:hover { border-color: var(--ink-3); color: var(--ink); }
 
 .empty { padding: 64px 40px; text-align: center; color: var(--muted); }
+tbody tr.disbursed-row { background: #f0faf4; }
+tbody tr.disbursed-row:hover { background: #e6f4ec; }
 .eh { font-family: var(--serif); font-size: 18px; color: var(--ink); margin-bottom: 8px; }
 .es { font-size: 13px; font-family: var(--mono); }
 
@@ -324,9 +326,11 @@ tbody tr:hover .rb { opacity: 1; }
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="loadingBar" style="position:fixed;top:56px;left:0;right:0;height:2px;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform 0.3s;z-index:300"></div>
 
 <script>
-const KEY='recur_v3';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzQs1x8CRg4wJ0WOKeE_hMHI3GQiK0rgQQDZnbTh57WfaIFvIx6jYtPQEwUvoC_NfMU6w/exec';
+let saving=false;
 const DOCS=[
   {id:'audited',  label:'Audited Financials',         owner:'Company'},
   {id:'prov',     label:'Provisional Financials',     owner:'Company'},
@@ -341,8 +345,43 @@ const OCOL={CapC:'#1a3a5c',Underwriter:'#1a3a8b',Operations:'#7a4e00',Company:'#
 
 let deals=[],editId=null,sF='all',oF='all',mF='all';
 
-function load(){try{deals=JSON.parse(localStorage.getItem(KEY))||sample();}catch{deals=sample();}}
-function save(){localStorage.setItem(KEY,JSON.stringify(deals));}
+function showLoading(on){
+  document.getElementById('loadingBar').style.transform=on?'scaleX(0.7)':'scaleX(1)';
+  setTimeout(()=>{if(!on)document.getElementById('loadingBar').style.transform='scaleX(0)';},300);
+}
+function load(){
+  showLoading(true);
+  fetch(SCRIPT_URL+'?action=getDeals')
+    .then(r=>r.json())
+    .then(data=>{
+      deals=data.deals&&data.deals.length>0?data.deals:sample();
+      deals.forEach(d=>{
+        d.size=parseFloat(d.size)||0;
+        d.rpct=parseFloat(d.rpct)||0;
+        if(typeof d.docs==='string'){try{d.docs=JSON.parse(d.docs);}catch{d.docs={};}}
+      });
+      showLoading(false);
+      renderMetrics();render();
+    })
+    .catch(()=>{
+      deals=sample();
+      showLoading(false);
+      renderMetrics();render();
+      toast('Offline — using local data');
+    });
+}
+function save(){
+  if(saving)return;
+  saving=true;
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    body:JSON.stringify({action:'saveDeals',deals:deals}),
+    headers:{'Content-Type':'application/json'}
+  })
+  .then(r=>r.json())
+  .then(()=>{saving=false;})
+  .catch(()=>{saving=false;toast('Save failed — check connection');});
+}
 
 function sample(){return[
   {id:1,co:'Healthkart',type:'D2C Health',size:10,rpct:2.5,stage:'Diligence',owner:'Underwriter',
@@ -436,10 +475,11 @@ function render(){
     const dc=diff===null?'':diff<0?'dov':diff<=2?'dsn':'dok';
     const dt=diff===null?'—':diff<0?`${Math.abs(diff)}d overdue`:diff===0?'Today':diff===1?'Tomorrow':d.due;
     const ns=d.owner==='CapC'?d.step_me:d.step_co;
-    return `<tr onclick="openDetail(${d.id})">
+    const isDis=d.stage==='Disbursed';
+    return `<tr class="${isDis?'disbursed-row':''}" onclick="openDetail(${d.id})">
       <td><div class="cn">${d.co}</div><div class="ct">${d.type||'—'}</div>${d.spoc_name?`<div class="cs">${d.spoc_name}</div>`:''}</td>
       <td><div class="num">₹${d.size}Cr</div></td>
-      <td><div class="rv">₹${rv}L</div><div class="nsub">${d.rpct}%</div></td>
+      <td><div class="rv" style="${isDis?'font-weight:700;color:#0d5c2e;font-size:14px':''}">${isDis?'<strong>':''}₹${rv}L${isDis?'</strong>':''}</div><div class="nsub">${d.rpct}%</div></td>
       <td><span class="stg ${SC[d.stage]||''}"><span class="sd"></span>${d.stage}</span></td>
       <td><span class="own ${OC[d.owner]||''}">${d.owner}</span></td>
       <td><div class="dc"><div class="dt"><div class="df" style="width:${pct}%;background:${bc}"></div></div><span class="dp">${pct}%</span></div></td>
@@ -597,7 +637,7 @@ function exportCSV(){
 let tt;
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2200);}
 
-load();renderMetrics();render();
+load();
 </script>
 </body>
 </html>
